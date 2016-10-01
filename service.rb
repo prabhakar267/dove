@@ -2,7 +2,7 @@ require 'sinatra'
 require "http"
 require 'json'
 require "base64"
-require 'twilio-ruby' 
+require 'twilio-ruby'
 
 client_id = 'staging-grofers'
 client_secret = '51e6d096-56f6-40b4-a2b9-9e0f8fa704b8'
@@ -12,22 +12,44 @@ registered_users = {
 	"7838121295" => 'e7fdbe44-2c8d-43ca-8c17-269b2d78cdfa'
 }
 
+def send_twilio_message(to_number, message)
+	account_sid = 'ACce698a0c8a05f3cb16eb6f928faed8ea'
+	auth_token = '0b03d049efc458da06e4b702c6347bb6'
+
+	# set up a client to talk to the Twilio REST API
+	@client = Twilio::REST::Client.new account_sid, auth_token
+	@client.account.messages.create({
+		:from => '+12058815273',
+		:to => to_number,
+		:body => message,
+	})
+end
+
+def checkBal(me)
+	#puts registered_users
+	check_balance_api_url = 'https://trust-uat.paytm.in/wallet-web/checkBalance'
+	response = HTTP.headers(:ssotoken => '77cb89f5-35da-4011-92f1-deffd0972200').post(check_balance_api_url)
+	if response.code != 200
+		"Failed bal req #{response.code}"
+	else
+		puts "before tw"
+		send_twilio_message("+91"<<me, JSON.parse(response.body)['response']['amount'])
+	end
+	"all ok1"
+end
+
 get '/' do
 	# content_type :json
 	mobile_number = params['from']
 	message = params['message']
 	tokens = message.split()
 	if tokens[0].downcase == "paytm"
-		puts "Message from "<<mobile_number<<"\nQuery : "<<message
-		"""
-		case tokens[1]
+		case tokens[1].downcase
 		when 'send', 'pay'
 			puts 'call API 1'
 		when 'balance', 'bal'
-			puts 'call API 2'
+			checkBal(mobile_number)
 		end
-		"""
-		"all ok"
 	end
 
 	# tokens.length.times do | token |
@@ -113,19 +135,4 @@ get '/checkBal' do
 	else
 		response.body
 	end
-end
-
-
-def send_twilio_message(to_number, message)
-	account_sid = 'ACce698a0c8a05f3cb16eb6f928faed8ea' 
-	auth_token = '0b03d049efc458da06e4b702c6347bb6' 
- 
-	# set up a client to talk to the Twilio REST API 
-	@client = Twilio::REST::Client.new account_sid, auth_token 
-	 
-	@client.account.messages.create({
-		:from => '+12058815273', 
-		:to => to_number, 
-		:body => message,  
-	}) 
 end
