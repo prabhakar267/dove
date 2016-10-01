@@ -1,4 +1,5 @@
 require 'sinatra'
+<<<<<<< HEAD
 require "http"
 require 'json'
 require "base64"
