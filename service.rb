@@ -2,6 +2,7 @@ require 'sinatra'
 require "http"
 require 'json'
 require "base64"
+require 'twilio-ruby' 
 
 client_id = 'staging-grofers'
 client_secret = '51e6d096-56f6-40b4-a2b9-9e0f8fa704b8'
@@ -112,4 +113,19 @@ get '/checkBal' do
 	else
 		response.body
 	end
+end
+
+
+def send_twilio_message(to_number, message)
+	account_sid = 'ACce698a0c8a05f3cb16eb6f928faed8ea' 
+	auth_token = '0b03d049efc458da06e4b702c6347bb6' 
+ 
+	# set up a client to talk to the Twilio REST API 
+	@client = Twilio::REST::Client.new account_sid, auth_token 
+	 
+	@client.account.messages.create({
+		:from => '+12058815273', 
+		:to => to_number, 
+		:body => message,  
+	}) 
 end
