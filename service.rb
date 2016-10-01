@@ -4,8 +4,8 @@ require 'json'
 require "base64"
 require 'twilio-ruby'
 
-client_id = 'staging-grofers'
-client_secret = '51e6d096-56f6-40b4-a2b9-9e0f8fa704b8'
+client_id = 'staging-hackathalon'
+client_secret = 'ac2c2f5b-cea8-4c62-9b28-a6de77e221df'
 
 registered_users = {
 	"9810181713" => '77cb89f5-35da-4011-92f1-deffd0972200',
@@ -33,15 +33,16 @@ def checkBal(me)
 		"Failed bal req #{response.code}"
 	else
 		puts "before tw"
-		send_twilio_message("+91"<<me, JSON.parse(response.body)['response']['amount'])
+		send_twilio_message(me, JSON.parse(response.body)['response']['amount'])
 	end
-	"all ok1"
 end
 
 get '/' do
 	# content_type :json
+	# puts params.to_json
 	mobile_number = params['from']
 	message = params['message']
+	mobile_number[0] = '+'
 	tokens = message.split()
 	if tokens[0].downcase == "paytm"
 		case tokens[1].downcase
@@ -57,6 +58,7 @@ get '/' do
 	# end
 	# tokens
 	# { :message => "#{params['message']}"}.to_json
+	"all ok"
 end
 
 get '/getState' do
