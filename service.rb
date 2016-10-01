@@ -1,5 +1,7 @@
 require 'sinatra'
+require 'json'
 
 get '/' do
-  'Hi losers!'
+	content_type :json
+	{ :message => "#{params['message']}"}.to_json
 end
