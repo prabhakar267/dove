@@ -25,21 +25,18 @@ def send_twilio_message(to_number, message)
 	})
 end
 
-def checkBal(me)
-	#puts registered_users
+def checkBal(me, registered_users)
 	check_balance_api_url = 'https://trust-uat.paytm.in/wallet-web/checkBalance'
-	response = HTTP.headers(:ssotoken => '77cb89f5-35da-4011-92f1-deffd0972200').post(check_balance_api_url)
+	me.slice! "+91"
+	response = HTTP.headers(:ssotoken => registered_users[me]).post(check_balance_api_url)
 	if response.code != 200
-		"Failed bal req #{response.code}"
+		puts "Failed Req"
 	else
-		puts "before tw"
-		send_twilio_message(me, JSON.parse(response.body)['response']['amount'])
+		send_twilio_message("+91"<<me, "Hi!\n\nYour wallet balance is : "<<JSON.parse(response.body)['response']['amount'].to_s)
 	end
 end
 
 get '/' do
-	# content_type :json
-	# puts params.to_json
 	mobile_number = params['from']
 	message = params['message']
 	mobile_number[0] = '+'
@@ -49,16 +46,11 @@ get '/' do
 		when 'send', 'pay'
 			puts 'call API 1'
 		when 'balance', 'bal'
-			checkBal(mobile_number)
+			puts "entering balance"
+			checkBal(mobile_number, registered_users)
 		end
 	end
-
-	# tokens.length.times do | token |
-	# 	puts tokens[token]
-	# end
-	# tokens
-	# { :message => "#{params['message']}"}.to_json
-	"all ok"
+	"Flow Succesful"
 end
 
 get '/getState' do
@@ -127,9 +119,6 @@ get '/transfer' do
 end
 
 get '/checkBal' do
-	#of = params['of']
-	# trust-uat
-	#puts registered_users[of]<<"\n"
 	check_balance_api_url = 'https://trust-uat.paytm.in/wallet-web/checkBalance'
 	response = HTTP.headers(:ssotoken => "e7fdbe44-2c8d-43ca-8c17-269b2d78cdfa").post(check_balance_api_url)
 	if response.code != 200
