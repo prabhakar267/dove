@@ -26,13 +26,28 @@ def send_twilio_message(to_number, message)
 end
 
 def checkBal(me, registered_users)
+	sms_message = nil
+
 	check_balance_api_url = 'https://trust-uat.paytm.in/wallet-web/checkBalance'
 	me.slice! "+91"
-	response = HTTP.headers(:ssotoken => registered_users[me]).post(check_balance_api_url)
-	if response.code != 200
-		puts "Failed Req"
+	
+	if registered_users.key?(me)
+		user_oauth = registered_users[me]
+		response = HTTP.headers(:ssotoken => user_oauth).post(check_balance_api_url)
+
+		if response.code != 200
+			puts "Failed Request | #{response.code}"
+		else
+			json_response = JSON.parse(response.body)
+			amount = json_response['response']['amount']
+			sms_message = "\nHi!\nYour wallet balance is : " + amount.to_s
+		end
 	else
-		send_twilio_message("+91"<<me, "Hi!\n\nYour wallet balance is : "<<JSON.parse(response.body)['response']['amount'].to_s)
+		sms_message = "\nSorry! We don't have any account associated with +91-" + me
+	end
+	
+	if sms_message
+		send_twilio_message("+91" + me, sms_message)
 	end
 end
 
@@ -113,16 +128,6 @@ get '/transfer' do
 	response = HTTP.headers(:ssotoken => registered_users[from]).post('https://trust-uat.paytm.in/wallet-web/wrapper/p2pTransfer', :body => query.to_json)
 	if response.code != 200
 		"Failed Transfer request"
-	else
-		response.body
-	end
-end
-
-get '/checkBal' do
-	check_balance_api_url = 'https://trust-uat.paytm.in/wallet-web/checkBalance'
-	response = HTTP.headers(:ssotoken => "e7fdbe44-2c8d-43ca-8c17-269b2d78cdfa").post(check_balance_api_url)
-	if response.code != 200
-		"Failed bal req #{response.code}"
 	else
 		response.body
 	end
