@@ -11,11 +11,6 @@ service_name = "Dove"
 
 redis = Redis.new
 
-registered_users = {
-	# "9810181713" => '77cb89f5-35da-4011-92f1-deffd0972200',
-	"7838121295" => 'e7fdbe44-2c8d-43ca-8c17-269b2d78cdfa'
-}
-
 def send_twilio_message(to_number, message)
 	account_sid = 'ACce698a0c8a05f3cb16eb6f928faed8ea'
 	auth_token = '0b03d049efc458da06e4b702c6347bb6'
@@ -29,7 +24,7 @@ def send_twilio_message(to_number, message)
 	})
 end
 
-def check_bal(redis, me, registered_users)
+def check_bal(redis, me)
 	sms_message = nil
 
 	check_balance_api_url = 'https://trust-uat.paytm.in/wallet-web/checkBalance'
@@ -70,6 +65,7 @@ def reg_user(redis, mobile_number, email, client_id)
 	}
 
 	response = HTTP.post(register_user_api_url, :body => get_state_hash.to_json)
+
 	if response.code != 200
 		puts "Failed Request | #{response.code}"
 	else
@@ -95,17 +91,19 @@ def validate_user(redis, client_id, client_secret, mobile_number, user_otp)
 		:otp => user_otp,
 		:state => redis.get("validate_state:#{mobile_number}")
 	}
-	puts get_token_hash[:state]
-	puts get_token_hash[:state].class
+	
 	response = HTTP.headers("Authorization" => basic_auth, "Content-Type" => 'application/json').post(validate_user_api_url, :body => get_token_hash.to_json)
+
 	if response.code != 200
 		puts "Failed Request | #{response.code}"
 	else
 		sms_message = "\nCongrats\n You can now use Dove!"
 		json_response = JSON.parse(response.body)
-		puts json_response["access_token"]
-		puts response.body
 		redis.set("user_tokens:#{mobile_number}", json_response["access_token"])
+	end
+
+	if sms_message
+		send_twilio_message("+91" + mobile_number, sms_message)
 	end
 end
 
@@ -115,13 +113,14 @@ get '/' do
 	message = params['message']
 	mobile_number[0] = '+'
 	tokens = message.split()
+
 	if tokens[0].downcase == "paytm"
 		case tokens[1].downcase
 		when 'send', 'pay'
 			puts 'call API 1'
 		when 'balance', 'bal'
 			puts "entering balance"
-			check_bal(redis, mobile_number, registered_users)
+			check_bal(redis, mobile_number)
 		when 'register', 'reg'
 			puts "entering registration"
 			email = tokens[2].downcase
@@ -135,10 +134,8 @@ get '/' do
 	"YOLO | Flow Succesful"
 end
 
-get '/getToken' do
-	
-end
 
+=begin
 get '/transfer' do
 	from = params['from']
 	to = params['to']
@@ -167,3 +164,4 @@ get '/transfer' do
 		response.body
 	end
 end
+=end
