@@ -159,29 +159,36 @@ get '/' do
 
 	if tokens[0].downcase == "paytm"
 		case tokens[1].downcase
+		
+		# user wants to send money to a different number
+		# paytm send | pay <payee number> <amount>
 		when 'send', 'pay'
 			puts "sending money because obama is no longer prezz"
 			to = tokens[2].downcase
 			amount = tokens[3].to_i
-
 			send_money(redis, mobile_number, to, amount)
+
+		# user wants to check his/her current available amount
+		# paytm bal | balance
 		when 'balance', 'bal'
 			puts "entering balance"
 			check_bal(redis, mobile_number)
+		
+		# user wants to register his/her phone number
+		# paytm register | reg <email>
 		when 'register', 'reg'
 			puts "entering registration"
 			email = tokens[2].downcase
 			reg_user(redis, mobile_number, email, client_id)
+		
+		# user completes the registration by verifying his/her mobile
+		# paytm validate <OTP>
 		when 'validate'
 			puts "entering registration step 2"
 			user_otp = tokens[2].downcase
 			validate_user(redis, client_id, client_secret, mobile_number, user_otp)
 		end
 	end
-	"YOLO | Flow Succesful"
-end
 
-
-get '/transfer' do
-	
+	"Request complete | Long live crime master GOGO | (c) 2016 Dove Evil Inc."
 end
