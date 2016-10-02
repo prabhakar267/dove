@@ -41,7 +41,7 @@ def check_bal(redis, me)
 		else
 			json_response = JSON.parse(response.body)
 			amount = json_response['response']['amount']
-			sms_message = "\nHi!\nYour available wallet balance is : " + amount.to_s
+			sms_message = "\nHi!\nYour available wallet balance is : " + amount.to_s + "\n (exclusive of blocked/pre-authorized balance)"
 		end
 	else
 		sms_message = "\nSorry! We don't have any account associated with +91-" + me + "\nSend 'paytm reg <email>' to register your number"
@@ -136,11 +136,8 @@ def send_money(redis, from, to, amt)
 		puts "Failed Transfer request | #{response}" 
 	else
 		json_response = JSON.parse(response)
-		puts response
 		if json_response['txnStatus'] == "SUCCESS"
-			puts response
 			sms_message = json_response['response']['text']
-			
 			sms_message_to = "\nHey!\nSuccesfully added INR " + amt.to_s + " from your friend +91-" + from
 			send_twilio_message("+91" + to, sms_message_to)	
 		else
