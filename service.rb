@@ -5,9 +5,11 @@ require "base64"
 require 'twilio-ruby'
 require "redis"
 
-client_id = 'staging-hackathalon'
-client_secret = 'ac2c2f5b-cea8-4c62-9b28-a6de77e221df'
-service_name = "Dove"
+file = File.read('config.json')
+data_hash = JSON.parse(file)
+
+client_id = data_hash['client_id']
+client_secret = data_hash['client_secret']
 
 redis = Redis.new
 
