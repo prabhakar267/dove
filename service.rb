@@ -22,7 +22,7 @@ def send_twilio_message(to_number, message)
 	@client.account.messages.create({
 		:from => '+12058815273',
 		:to => to_number,
-		:body => message,
+		:body => message + "\nEnjoy Dove!",
 	})
 end
 
@@ -41,7 +41,7 @@ def check_bal(redis, me)
 		else
 			json_response = JSON.parse(response.body)
 			amount = json_response['response']['amount']
-			sms_message = "\nHi!\nYour wallet balance is : " + amount.to_s
+			sms_message = "\nHi!\nYour available wallet balance is : " + amount.to_s
 		end
 	else
 		sms_message = "\nSorry! We don't have any account associated with +91-" + me + "\nSend 'paytm reg <email>' to register your number"
@@ -109,6 +109,50 @@ def validate_user(redis, client_id, client_secret, mobile_number, user_otp)
 	end
 end
 
+def send_money(redis, from, to, amt)
+	sms_message = nil
+	from.slice! "+91"
+
+	puts "something | #{amt}"
+
+	query = {
+		:request => {
+			:isToVerify => 1,
+			:isLimitApplicable => 1,
+			:payeeEmail => "",
+			:payeeMobile => to,
+			:payeeCustId => "",
+			:amount => amt,
+			:currencyCode => "INR",
+			:comment => "Loan"
+		},
+		:ipAddress => "127.0.0.1",
+		:platformName => "PayTM",
+		:operationType => "P2P_TRANSFER"
+	}
+
+	response = HTTP.headers(:ssotoken => redis.get("user_tokens:#{from}")).post('https://trust-uat.paytm.in/wallet-web/wrapper/p2pTransfer', :body => query.to_json)
+	if response.code != 200
+		puts "Failed Transfer request | #{response}" 
+	else
+		json_response = JSON.parse(response)
+		puts response
+		if json_response['txnStatus'] == "SUCCESS"
+			puts response
+			sms_message = json_response['response']['text']
+			
+			sms_message_to = "\nHey!\nSuccesfully added INR " + amt.to_s + " from your friend +91-" + from
+			send_twilio_message("+91" + to, sms_message_to)	
+		else
+			sms_message = json_response['response']['text']
+
+		end
+
+	end
+	if sms_message
+		send_twilio_message("+91" + from, sms_message)
+	end
+end
 
 get '/' do
 	mobile_number = params['from']
@@ -119,7 +163,11 @@ get '/' do
 	if tokens[0].downcase == "paytm"
 		case tokens[1].downcase
 		when 'send', 'pay'
-			puts 'call API 1'
+			puts "sending money because obama is no longer prezz"
+			to = tokens[2].downcase
+			amount = tokens[3].to_i
+
+			send_money(redis, mobile_number, to, amount)
 		when 'balance', 'bal'
 			puts "entering balance"
 			check_bal(redis, mobile_number)
@@ -137,33 +185,6 @@ get '/' do
 end
 
 
-=begin
 get '/transfer' do
-	from = params['from']
-	to = params['to']
-	amt = params['amt'].to_i
-
-	query = {
-		:request => {
-			:isToVerify => 0,
-			:isLimitApplicable => 0,
-			:payeeEmail => "",
-			:payeeMobile => to,
-			:payeeCustId => "",
-			:amount => amt,
-			:currencyCode => "INR",
-			:comment => "Loan"
-		},
-		:ipAddress => "127.0.0.1",
-		:platformName => "PayTM",
-		:operationType => "P2P_TRANSFER"
-	}
-
-	response = HTTP.headers(:ssotoken => registered_users[from]).post('https://trust-uat.paytm.in/wallet-web/wrapper/p2pTransfer', :body => query.to_json)
-	if response.code != 200
-		"Failed Transfer request"
-	else
-		response.body
-	end
+	
 end
-=end
