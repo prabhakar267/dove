@@ -11,16 +11,16 @@ data_hash = JSON.parse(file)
 client_id = data_hash['client_id']
 client_secret = data_hash['client_secret']
 
+$TWILIO_ACCOUNT_SID = data_hash['twilio']['account_sid']
+$TWILIO_AUTH_TOKEN = data_hash['twilio']['auth_token']
+$TWILIO_SENDER_NUM = data_hash['twilio']['sender_number']
+
 redis = Redis.new
 
 def send_twilio_message(to_number, message)
-	account_sid = 'ACce698a0c8a05f3cb16eb6f928faed8ea'
-	auth_token = '0b03d049efc458da06e4b702c6347bb6'
-
-	# set up a client to talk to the Twilio REST API
-	@client = Twilio::REST::Client.new account_sid, auth_token
+	@client = Twilio::REST::Client.new $TWILIO_ACCOUNT_SID, $TWILIO_AUTH_TOKEN
 	@client.account.messages.create({
-		:from => '+12058815273',
+		:from => $TWILIO_SENDER_NUM,
 		:to => to_number,
 		:body => message + "\nEnjoy Dove!",
 	})
