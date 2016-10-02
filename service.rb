@@ -17,7 +17,11 @@ $TWILIO_SENDER_NUM = data_hash['twilio']['sender_number']
 
 redis = Redis.new
 
+# call twilio api to send "message" to "to_number"
+# reference : https://www.twilio.com/console
 def send_twilio_message(to_number, message)
+	puts "Sending message to #{to_number}..."
+
 	@client = Twilio::REST::Client.new $TWILIO_ACCOUNT_SID, $TWILIO_AUTH_TOKEN
 	@client.account.messages.create({
 		:from => $TWILIO_SENDER_NUM,
@@ -26,6 +30,8 @@ def send_twilio_message(to_number, message)
 	})
 end
 
+# method to check available balance of user
+# reference : http://paywithpaytm.com/developer/paytm_api_doc?target=check-balance-api
 def check_bal(redis, me)
 	sms_message = nil
 
@@ -52,6 +58,7 @@ def check_bal(redis, me)
 	end
 end
 
+# step 1 of registration of a new user
 def reg_user(redis, mobile_number, email, client_id)
 	sms_message = nil
 	
@@ -82,6 +89,7 @@ def reg_user(redis, mobile_number, email, client_id)
 	end
 end
 
+# step 2 of registration of a new user
 def validate_user(redis, client_id, client_secret, mobile_number, user_otp)
 	sms_message = nil
 
@@ -109,11 +117,10 @@ def validate_user(redis, client_id, client_secret, mobile_number, user_otp)
 	end
 end
 
+# method to transfer money to a new number
 def send_money(redis, from, to, amt)
 	sms_message = nil
 	from.slice! "+91"
-
-	puts "something | #{amt}"
 
 	query = {
 		:request => {
@@ -157,11 +164,11 @@ get '/' do
 	mobile_number[0] = '+'
 	tokens = message.split()
 
-	if tokens[0].downcase == "paytm"
+	if tokens[0].downcase == "dove"
 		case tokens[1].downcase
 		
 		# user wants to send money to a different number
-		# paytm send | pay <payee number> <amount>
+		# dove send | pay <payee number> <amount>
 		when 'send', 'pay'
 			puts "sending money because obama is no longer prezz"
 			to = tokens[2].downcase
@@ -169,20 +176,20 @@ get '/' do
 			send_money(redis, mobile_number, to, amount)
 
 		# user wants to check his/her current available amount
-		# paytm bal | balance
+		# dove bal | balance
 		when 'balance', 'bal'
 			puts "entering balance"
 			check_bal(redis, mobile_number)
 		
 		# user wants to register his/her phone number
-		# paytm register | reg <email>
+		# dove register | reg <email>
 		when 'register', 'reg'
 			puts "entering registration"
 			email = tokens[2].downcase
 			reg_user(redis, mobile_number, email, client_id)
 		
 		# user completes the registration by verifying his/her mobile
-		# paytm validate <OTP>
+		# dove validate <OTP>
 		when 'validate'
 			puts "entering registration step 2"
 			user_otp = tokens[2].downcase
