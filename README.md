@@ -1,4 +1,4 @@
-# Dove <img src="/assets/images/dove-and-cross-clipart-diraa694T.png" style="width:7%; margin-left:5px; margin-top:-5px;"> | Payments brought offline to users
+# Dove | Payments brought offline to users <img src="/assets/images/dove-and-cross-clipart-diraa694T.png" width="60px">
 
 Dove is **an offline payment service**, built on the top of [PayTM APIs](http://paywithpaytm.com/developer/), which can be used on any mobile device (including legacy mobile devices which don't even have a GUI or provisions for internet connectivity) without installing any additional application.
 
