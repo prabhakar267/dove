@@ -197,5 +197,5 @@ get '/' do
 		end
 	end
 
-	"Request complete | Long live crime master GOGO | (c) 2016 Dove Evil Inc."
+	"Request complete | Long live crime master GOGO | (c) 2017 Dove Evil Inc."
 end
